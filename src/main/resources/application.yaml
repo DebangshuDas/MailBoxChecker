@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: MailBoxChecker
+  config:
+    import: optional:classpath:application-local.yaml
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+    consumer:
+      group-id: demo-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  security:
+    oauth2:
+      client:
+        registration:
+          graph:
+            client-id: ${azure.client-id}
+            client-secret: ${azure.client-secret}
+
+            scope:
+              - openid
+              - profile
+              - offline_access
+              - https://graph.microsoft.com/Mail.Read
+
+            authorization-grant-type: authorization_code
+
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+        provider:
+          graph:
+            authorization-uri: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+
+            token-uri: https://login.microsoftonline.com/common/oauth2/v2.0/token
+
+            jwk-set-uri: https://login.microsoftonline.com/common/discovery/v2.0/keys
+
+            user-info-uri: https://graph.microsoft.com/oidc/userinfo
+
+            user-name-attribute: sub
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

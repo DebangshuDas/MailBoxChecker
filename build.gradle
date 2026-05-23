@@ -18,8 +18,7 @@ repositories {
 }
 
 dependencies {
-
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'com.azure:azure-identity:1.14.0'
 
     implementation 'com.microsoft.graph:microsoft-graph:5.80.0'
 

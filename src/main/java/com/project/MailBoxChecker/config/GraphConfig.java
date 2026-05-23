@@ -1,39 +1,47 @@
-//package com.project.MailBoxChecker.config;
-//
-//import com.microsoft.graph.authentication.IAuthenticationProvider;
-//import com.microsoft.graph.requests.GraphServiceClient;
-//import okhttp3.Request;
-//
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-//import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-//
-//import java.util.concurrent.CompletableFuture;
-//
-//@Configuration
-//public class GraphConfig {
-//
-//    @Bean
-//    public GraphServiceClient<Request> graphClient(
-//            OAuth2AuthorizedClientService clientService) {
-//
-//        OAuth2AuthorizedClient client =
-//                clientService.loadAuthorizedClient(
-//                        "graph",
-//                        "user"
-//                );
-//
-//        String accessToken =
-//                client.getAccessToken().getTokenValue();
-//
-//        IAuthenticationProvider authProvider =
-//                requestUrl ->
-//                        CompletableFuture.completedFuture(accessToken);
-//
-//        return GraphServiceClient
-//                .builder()
-//                .authenticationProvider(authProvider)
-//                .buildClient();
-//    }
-//}
+package com.project.MailBoxChecker.config;
+
+import com.azure.identity.ClientSecretCredential;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
+import com.microsoft.graph.requests.GraphServiceClient;
+import okhttp3.Request;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+@Configuration
+public class GraphConfig {
+
+    @Value("${azure.client-id}")
+    private String clientId;
+
+    @Value("${azure.client-secret}")
+    private String clientSecret;
+
+    @Value("${azure.tenant-id}")
+    private String tenantId;
+
+    @Bean
+    public GraphServiceClient<Request> graphClient() {
+
+        ClientSecretCredential credential =
+                new ClientSecretCredentialBuilder()
+                        .clientId(clientId)
+                        .clientSecret(clientSecret)
+                        .tenantId(tenantId)
+                        .build();
+
+        TokenCredentialAuthProvider authProvider =
+                new TokenCredentialAuthProvider(
+                        List.of("https://graph.microsoft.com/.default"),
+                        credential
+                );
+
+        return GraphServiceClient
+                .builder()
+                .authenticationProvider(authProvider)
+                .buildClient();
+    }
+}

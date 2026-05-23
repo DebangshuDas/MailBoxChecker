@@ -9,45 +9,52 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-//@Service
+@Service
 @RequiredArgsConstructor
 public class MailPollingService {
 
     private final GraphServiceClient<Request> graphClient;
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, String>
+            kafkaTemplate;
 
     @Value("${mailbox.user}")
     private String mailboxUser;
 
     @Scheduled(fixedDelay = 30000)
-    public void checkMails() {
+    public void pollMailbox() {
 
-        MessageCollectionPage messages =
-                graphClient
-                        .me()
-                        .messages()
-                        .buildRequest()
-                        .top(10)
-                        .get();
+        try {
 
-        for (Message message : messages.getCurrentPage()) {
+            MessageCollectionPage messages =
+                    graphClient
+                            .users(mailboxUser)
+                            .messages()
+                            .buildRequest()
+                            .top(10)
+                            .get();
 
-            String subject = message.subject;
+            for(Message message :
+                    messages.getCurrentPage()) {
 
-            if ("CREATE_TICKET".equalsIgnoreCase(subject)) {
+                if(message.subject != null &&
+                        message.subject.contains(
+                                "CREATE_TICKET")) {
 
-                kafkaTemplate.send(
-                        "mail-events",
-                        message.id
-                );
+                    kafkaTemplate.send(
+                            "mail-events",
+                            message.subject
+                    );
 
-                System.out.println(
-                        "Kafka event published for mail: "
-                                + message.subject
-                );
+                    System.out.println(
+                            "Kafka event published"
+                    );
+                }
             }
+
+        } catch (Exception ex) {
+
+            ex.printStackTrace();
         }
     }
 }
